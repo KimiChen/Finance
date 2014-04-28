@@ -27,7 +27,7 @@ if (inTradeTime()) {
 // 交易时间
 function inTradeTime() {
 	// debug
-	//return true;
+	// return true;
 
 	// 周一到周五, 9:25-11:30  13:00-15:00
 	var amStart = 925;
@@ -109,9 +109,9 @@ function sendNotice(title, message) {
 	var prowl = new Prowl('3648f147a353e293b3934ab39d4aa72d4d15a50d');
 
 	prowl.push(title + "\n" + message, 'Stock Monitor', function(err, message){
-	    if( err ) {
-	    	console.log(err);	
-	    } 
+		if( err ) {
+			console.log(err);
+		}
 	});
 }
 
@@ -123,7 +123,7 @@ function checkChange (stock, rspStock) {
 	var notice = "  current price:" + rspStock.curPrice + " rate: " + rate + "%";
 
 	if (rspStock.curPrice == '0.00') {
-		console.log(stock.code + ' was Suspended');
+		console.log(stock.name + '(' + stock.code + ')' + ' was Suspended');
 		return false;
 	};
 
@@ -171,7 +171,7 @@ function checkChange (stock, rspStock) {
 
 		console.log(needNotice + notice);
 	} else {
-		console.log('Nothing for ' + stock.code);
+		console.log('Nothing for ' + stock.name + '(' + stock.code + ')');
 	};
 }
 
@@ -182,20 +182,21 @@ function getStockInfo (stock, checkChange) {
 	// 请求参数
 	request.get(
 		{
-			url: "http://hq.sinajs.cn/list=" + stock.code,
+			url: "http://qt.gtimg.cn/q=" + stock.code,
+			timeout: 2000,
 			encoding: "utf8"
 		},
 		function(error, response, body) {
 			if(!error && response.statusCode == 200){
 				// 运行变量
 				eval(body);
-				var infoString = eval('hq_str_' + stock.code);
 
-				var info = infoString.split(",");
+				var infoString = eval('v_' + stock.code);
+				var info = infoString.split('~');
 
 				var rspStock = {};
 				rspStock.curPrice = info[3];
-				rspStock.yesterdayPrice = info[2];
+				rspStock.yesterdayPrice = info[4];
 
 				rspStock.upDownRate = (rspStock.curPrice - rspStock.yesterdayPrice)/rspStock.yesterdayPrice;
 
