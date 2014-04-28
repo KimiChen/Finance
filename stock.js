@@ -27,7 +27,7 @@ if (inTradeTime()) {
 // 交易时间
 function inTradeTime() {
 	// debug
-	return true;
+	// return true;
 
 	// 周一到周五, 9:25-11:30  13:00-15:00
 	var amStart = 925;
