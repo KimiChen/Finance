@@ -14,10 +14,19 @@ if (inTradeTime()) {
 
 	console.log("Starting monitoring...... Now:" + curViewTime);
 
+	// 每次获取的股票的数据的股票数量
+	var perNum = 30;
+	//  需要获取几次
+	var page = Math.ceil(list.length/perNum);
+
 	// 开始循环监视
-	for(var i in list) {
-		getStockInfo(list[i], checkChange);
-	}
+	for (var i = 0; i < page; i++) {
+
+		var start = i * perNum;
+		var dstList = list.slice(start, start+perNum);
+
+		getStockInfo(dstList, checkChange);
+	};
 
 } else {
 	console.log("Not in trade time...... Now:" + curViewTime);
@@ -27,7 +36,7 @@ if (inTradeTime()) {
 // 交易时间
 function inTradeTime() {
 	// debug
-	// return true;
+	//return true;
 
 	// 周一到周五, 9:25-11:30  13:00-15:00
 	var amStart = 925;
@@ -106,7 +115,10 @@ function haveSendCheck(code) {
 // 发送消息
 function sendNotice(title, message) {
 
-	var prowl = new Prowl('3648f147a353e293b3934ab39d4aa72d4d15a50d');
+	// debug
+	//return true;
+
+	var prowl = new Prowl('f9d74d045ce08b23b39c9bf540db3d8648a6f582');
 
 	prowl.push(title + "\n" + message, 'Stock Monitor', function(err, message){
 		if( err ) {
@@ -169,7 +181,7 @@ function checkChange (stock, rspStock) {
 		var haveSended = haveSendCheck(stock.code);
 		!haveSended && sendNotice(stock.name + '(' + stock.code + ') ' + needNotice, notice);
 
-		console.log(needNotice + notice);
+		console.log(stock.name + '(' + stock.code + ') ' + needNotice + notice);
 	} else {
 		console.log('Nothing for ' + stock.name + '(' + stock.code + ')');
 	};
@@ -177,12 +189,19 @@ function checkChange (stock, rspStock) {
 
 
 // 获取详细信息
-function getStockInfo (stock, checkChange) {
+function getStockInfo (dstList, checkChange) {
+
+	// 构造查询列表
+	var codeList = [];
+	for(var i in dstList) {
+		codeList.push(dstList[i].code);
+	}
+	var queryList = codeList.join(',');
 
 	// 请求参数
 	request.get(
 		{
-			url: "http://qt.gtimg.cn/q=" + stock.code,
+			url: "http://qt.gtimg.cn/q=" + queryList,
 			timeout: 2000,
 			encoding: "utf8"
 		},
@@ -191,16 +210,22 @@ function getStockInfo (stock, checkChange) {
 				// 运行变量
 				eval(body);
 
-				var infoString = eval('v_' + stock.code);
-				var info = infoString.split('~');
+				for(var i in dstList) {
 
-				var rspStock = {};
-				rspStock.curPrice = info[3];
-				rspStock.yesterdayPrice = info[4];
+					var stock = dstList[i];
 
-				rspStock.upDownRate = (rspStock.curPrice - rspStock.yesterdayPrice)/rspStock.yesterdayPrice;
+					var infoString = eval('v_' + stock.code);
+					var info = infoString.split('~');
 
-				checkChange(stock, rspStock);
+					var rspStock = {};
+					rspStock.curPrice = info[3];
+					rspStock.yesterdayPrice = info[4];
+
+					rspStock.upDownRate = (rspStock.curPrice - rspStock.yesterdayPrice)/rspStock.yesterdayPrice;
+
+					checkChange(stock, rspStock);
+				}
+
 			} else {
 				// 错误信息
 				console.log(error);
